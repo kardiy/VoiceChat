@@ -1,0 +1,8 @@
+name: VoiceChat
+version: '1.0-SNAPSHOT'
+main: mrkardiy.voicechat.Main
+api-version: '1.21'
+commands:
+  voicechat:
+    description: генерировать код для войс-чата.
+    usage: /voicechat

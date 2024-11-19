@@ -52,6 +52,27 @@ radius: 50
 
 #уникальное название вашего сервера, обязательно придумать своё
 name: serverlink
+
+#команды, доступные по умолчанию
+commands:
+  reload:
+    default_access: false
+  link:
+    default_access: true
+  code:
+    default_access: true
+  off:
+    default_access: true
+  on:
+    default_access: true
+  mute:
+    default_access: true
+  unmute:
+    default_access: true
+  listen:
+    default_access: false
+  myradius:
+    default_access: false
 ```
 
 ## Активация

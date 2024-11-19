@@ -14,7 +14,7 @@ public class VoiceChatTabCompleter implements TabCompleter {
 
     // Список подкоманд
     private final List<String> subCommands = Arrays.asList(
-            "code", "off", "on", "mute", "unmute", "listen", "myradius"
+            "link", "code", "off", "on", "mute", "unmute", "listen", "myradius"
     );
 
     @Override

@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,7 +35,7 @@ public final class Main extends JavaPlugin {
 
     // Префикс для сообщений
     private static final String PREFIX = ChatColor.BLUE + "[VoiceChat] " + ChatColor.WHITE;
-
+    private Map<String, Boolean> defaultCommandAccess = new HashMap<>();
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -69,6 +70,15 @@ public final class Main extends JavaPlugin {
         allowedIPs = new HashSet<>(config.getStringList("allowed_ips"));
         defaultRadius = config.getDouble("radius", 50.0);
         serverName = config.getString("name");
+
+        // Load command default access from the configuration
+        ConfigurationSection commandsSection = config.getConfigurationSection("commands");
+        if (commandsSection != null) {
+            for (String command : commandsSection.getKeys(false)) {
+                boolean defaultAccess = commandsSection.getBoolean(command + ".default_access", false);
+                defaultCommandAccess.put(command.toLowerCase(), defaultAccess);
+            }
+        }
     }
 
     private void startSocketServer() {
@@ -107,46 +117,36 @@ public final class Main extends JavaPlugin {
 
                 String subCommand = args[0].toLowerCase();
 
+                // Check for default access first
+                boolean hasDefaultAccess = defaultCommandAccess.getOrDefault(subCommand, false);
+
+                // Define permission strings
+                String permission = "voicechat.command." + subCommand;
+
+                // Check permissions only if default access is not granted
+                if (!hasDefaultAccess && !player.hasPermission(permission)) {
+                    sendMessage(player, "У вас нет разрешения на использование этой команды.");
+                    return true;
+                }
+
                 switch (subCommand) {
                     case "reload":
-                        if (!player.hasPermission("voicechat.command.reload")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         reloadConfig();
+                        sendMessage(player, "Конфигурация перезагружена.");
+                        return true;
                     case "link":
-                        if (!player.hasPermission("voicechat.command.link")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         handleLinkCommand(player);
                         return true;
                     case "code":
-                        if (!player.hasPermission("voicechat.command.code")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         handleCodeCommand(player);
                         return true;
                     case "off":
-                        if (!player.hasPermission("voicechat.command.off")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         handleOffCommand(player);
                         return true;
                     case "on":
-                        if (!player.hasPermission("voicechat.command.on")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         handleOnCommand(player);
                         return true;
                     case "mute":
-                        if (!player.hasPermission("voicechat.command.mute")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         if (args.length < 2) {
                             sendMessage(player, "Использование: /voicechat mute <игрок>");
                             return true;
@@ -154,10 +154,6 @@ public final class Main extends JavaPlugin {
                         handleMuteCommand(player, args[1]);
                         return true;
                     case "unmute":
-                        if (!player.hasPermission("voicechat.command.unmute")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         if (args.length < 2) {
                             sendMessage(player, "Использование: /voicechat unmute <игрок>");
                             return true;
@@ -165,10 +161,6 @@ public final class Main extends JavaPlugin {
                         handleUnmuteCommand(player, args[1]);
                         return true;
                     case "listen":
-                        if (!player.hasPermission("voicechat.command.listen")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         if (args.length < 2) {
                             sendMessage(player, "Использование: /voicechat listen <игрок>");
                             return true;
@@ -176,10 +168,6 @@ public final class Main extends JavaPlugin {
                         handleListenCommand(player, args[1]);
                         return true;
                     case "myradius":
-                        if (!player.hasPermission("voicechat.command.myradius")) {
-                            sendMessage(player, "У вас нет разрешения на использование этой команды.");
-                            return true;
-                        }
                         if (args.length < 2) {
                             sendMessage(player, "Использование: /voicechat myradius <радиус>");
                             return true;
@@ -187,7 +175,7 @@ public final class Main extends JavaPlugin {
                         handleMyRadiusCommand(player, args[1]);
                         return true;
                     default:
-                        sendMessage(player, "Неизвестная подкоманда. Доступные команды: code, off, on, mute, unmute, listen, myradius.");
+                        sendMessage(player, "Неизвестная подкоманда. Доступные команды: reload, link, code, off, on, mute, unmute, listen, myradius.");
                         return true;
                 }
             } else {
